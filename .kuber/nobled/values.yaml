@@ -1,0 +1,58 @@
+# Default values for nobled.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+namespace: nobled
+nodeselector: misha-a320m-s2h-v2
+
+volumes:
+  mountpath:
+    noble: /root/.noble/
+  hostpath:
+    noble: /root/.noble/
+
+images:
+  noble:
+    image: offflane/nobled
+    pullPolicy: IfNotPresent
+    tag: test
+
+deployments:
+  noble:
+    name: noble
+    replicas: 1
+    labels:
+      app: noble
+    ports:
+      gRPCw:
+        name: "grpc-web"
+        port: 9091
+      gRPC:
+        name: "grpc-server"
+        port: 9092
+      listen:
+        name: "listen-address"
+        port: 6060
+      incoming:
+        name: "incomin-connect"
+        port: 26656
+      RPC:
+        name: "rpc-server"
+        port: 26657
+      Prometheus:
+        name: "prometheus"
+        port: 26660
+
+develop:
+  mount: true
+
+podAnnotations: {}
+
+podSecurityContext: {}
+
+securityContext: {}
+
+resources: {}
+
+tolerations: []
+
+affinity: {}

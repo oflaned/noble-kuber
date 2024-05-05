@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Values.deployments.noble.name }}
+  labels:
+    {{- with .Values.deployments.noble.labels }}
+      {{- toYaml . | nindent 4}}
+    {{- end }}
+spec:
+  serviceName: {{ .Values.deployments.noble.name }}
+  selector:
+  {{- with .Values.deployments.noble.labels }}
+    matchLabels:
+        {{- toYaml . | nindent 6}}
+  {{- end }}
+  template:
+    metadata:
+    {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.deployments.noble.labels }}
+      labels:
+          {{- toYaml . | nindent 8}}
+    {{- end }}
+    spec:
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Values.deployments.noble.name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.images.noble.image }}:{{ .Values.images.noble.tag }}"
+          imagePullPolicy: {{ .Values.images.noble.pullPolicy }}
+          volumeMounts:
+            - mountPath: /etc/timezone
+              name: timezone
+            - mountPath: /etc/localtime
+              name: localtime
+            - mountPath: {{ .Values.volumes.mountpath.noble }}
+              name: noble
+          ports:
+            {{- range $port := .Values.deployments.noble.ports }}
+              - name: {{ $port.name }}
+                containerPort: {{ $port.port }}
+                protocol: TCP
+            {{- end }}
+      volumes:
+        - name: noble
+          hostPath:
+            path: {{ .Values.volumes.hostpath.noble }}
+        - name: timezone
+          hostPath:
+            path: /etc/timezone
+        - name: localtime
+          hostPath:
+            path: /etc/localtime
+      {{ if ne .Values.namespace "local" }}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                      - {{ .Values.nodeselector }}
+      {{ end }}
